@@ -119,9 +119,13 @@ app.post('/api/explain', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Backend running on http://localhost:${PORT}`);
-  if (!process.env.GROQ_API_KEY) console.warn('  GROQ_API_KEY not set in .env');
-  if (!process.env.ETHERSCAN_API_KEY) console.warn(' ETHERSCAN_API_KEY not set in .env');
-});
+if (require.main === module) {
+  const PORT = process.env.PORT || 3001;
+  app.listen(PORT, () => {
+    console.log(`Backend running on http://localhost:${PORT}`);
+    if (!process.env.GROQ_API_KEY) console.warn('  GROQ_API_KEY not set in .env');
+    if (!process.env.ETHERSCAN_API_KEY) console.warn(' ETHERSCAN_API_KEY not set in .env');
+  });
+}
+
+module.exports = app;

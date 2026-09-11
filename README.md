@@ -8,7 +8,7 @@ No smart contract required. This is a read-only tool:
 
 ```
 Frontend (React)  →  Backend (Node/Express)  →  Etherscan API (tx data)
-                                              →  Claude API (explanation)
+                                              →  Groq API (explanation)
 ```
 
 ---
@@ -16,7 +16,7 @@ Frontend (React)  →  Backend (Node/Express)  →  Etherscan API (tx data)
 ## 1. Prerequisites
 
 - Node.js 18+ and npm installed (`node -v` to check)
-- An **Anthropic API key** — https://console.anthropic.com/settings/keys
+- A **Groq API key** — https://console.groq.com/keys
 - A free **Etherscan API key** — https://etherscan.io/apis (sign up, create an API key, free tier is enough)
 
 ---
@@ -53,7 +53,7 @@ cp .env.example .env
 Open `.env` and fill in your keys:
 
 ```
-ANTHROPIC_API_KEY=sk-ant-...
+GROQ_API_KEY=your_groq_api_key_here
 ETHERSCAN_API_KEY=your_etherscan_key
 PORT=3001
 ```
@@ -133,7 +133,7 @@ Show 2 contrasting transactions back to back:
 
 | Problem | Fix |
 |---|---|
-| `ANTHROPIC_API_KEY not set` warning on backend start | Check `.env` exists in `backend/` and the key has no quotes/spaces |
+| `GROQ_API_KEY not set` warning on backend start | Check `.env` exists in `backend/` and the key has no quotes/spaces |
 | `Transaction not found` error | Make sure you're using an **Ethereum mainnet** tx hash, not testnet, and it's a full 66-character hash (0x + 64 hex chars) |
 | CORS error in browser console | Confirm backend is running on port 3001 and frontend `.env` `REACT_APP_API_URL` matches it |
 | Etherscan rate limit error | Free tier is 5 calls/sec — wait a few seconds between tries |
@@ -141,15 +141,31 @@ Show 2 contrasting transactions back to back:
 
 ---
 
-## 7. Notes on scope (MVP, not production)
+## 7. Deploying to Vercel
+
+Backend and frontend deploy as **two separate Vercel projects**.
+
+**Backend** (`backend/` as project root):
+1. New Project → import repo → set **Root Directory** to `backend`.
+2. Vercel auto-detects `vercel.json` and deploys `server.js` as a serverless function.
+3. Add env vars in the project's Settings → Environment Variables: `GROQ_API_KEY`, `ETHERSCAN_API_KEY`.
+4. Deploy → note the resulting URL (e.g. `https://tx-explainer-backend.vercel.app`).
+
+**Frontend** (`frontend/` as project root):
+1. New Project → Root Directory = `frontend` (Create React App auto-detected).
+2. Add env var `REACT_APP_API_URL=https://tx-explainer-backend.vercel.app` (your backend URL from above).
+3. Deploy.
+
+---
+
+## 8. Notes on scope (MVP, not production)
 
 - Function decoding uses a small hardcoded selector lookup table
   (`backend/selectors.js`), not a full ABI decoder — covers common cases
   (approve, transfer, swap, NFT approvals) but will say "Unknown function"
   for anything else. Good enough for demo; a production version would
   pull full ABIs and decode parameters properly.
-- Etherscan free tier only covers Ethereum mainnet by default — for other
-  chains (Polygon, Arbitrum, etc.) you'd point at their respective
-  Etherscan-family API endpoints and add a chain selector to the UI.
+- Scoped to Ethereum mainnet only — no need to implement other chains
+  (Polygon, Arbitrum, etc.).
 - No wallet connection needed — this is read-only analysis of a hash you
   already have (e.g. pasted from a wallet's "confirm transaction" screen).
