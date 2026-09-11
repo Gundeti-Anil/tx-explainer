@@ -11,7 +11,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+let groq = null;
+function getGroqClient() {
+  if (!process.env.GROQ_API_KEY) {
+    throw new Error('GROQ_API_KEY not set on the server.');
+  }
+  if (!groq) groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+  return groq;
+}
 const ETHERSCAN_BASE = 'https://api.etherscan.io/v2/api';
 
 // ---------- Step 1: fetch + lightly decode tx data from Etherscan ----------
@@ -80,7 +87,7 @@ async function getTxData(txHash) {
 async function explainTx(txData) {
   const prompt = buildPrompt(txData);
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroqClient().chat.completions.create({
   model: 'openai/gpt-oss-120b',
   messages: [{ role: 'user', content: prompt }],
   response_format: { type: 'json_object' },
